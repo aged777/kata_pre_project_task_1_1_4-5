@@ -4,12 +4,15 @@ import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
+import javax.sound.midi.Track;
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
     private SessionFactory sessionFactory;
     private Session session;
+    private Transaction transaction = null;
 
     public UserDaoHibernateImpl () {
         this.sessionFactory = Util.getSessionFactory();
@@ -46,7 +49,23 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-
+        try {
+            // begin transaction
+            transaction = session.beginTransaction();
+            //save User
+            User user = new User(name, lastName, age);
+            session.save(user);
+            // commit transaction
+            transaction.commit();
+        } catch (Exception e) {
+            if(transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            session.close();
+            sessionFactory.close();
+        }
     }
 
     @Override
